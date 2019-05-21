@@ -1,0 +1,71 @@
+---
+title: "RMarkdown_and_Leaflet"
+author: "Joao Felizardo"
+date: "5/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+In this document I'm going to ducument Portugal main cities using [worlcities](https://www.kaggle.com/max-mind/world-cities-database) dataset, containing the latitude and longitude of each city. I'll use `Leaflet` R library to build maps with information about the cities.
+
+#### Preparing environment
+```{r echo=FALSE}
+library(leaflet)
+```
+
+#### Reading and cleaning the dataset
+```{r}
+# Reading .csv file
+wordcities <- read.csv("worldcities.csv")
+# Extracting info only related to Portugal
+portugal <- wordcities[wordcities$country == "Portugal",]
+# Droping not needed columns for this case
+drop <- c('city_ascii', 'country', 'iso2', 'iso3', 'id')
+pt <- portugal[,!(names(portugal) %in% drop)]
+head(pt)
+```
+
+#### Building the map
+```{r warning=FALSE}
+pt_map <- pt %>%
+  leaflet() %>% 
+  addTiles() %>%
+  addMarkers()
+pt_map
+```
+
+#### Adding icon to the map
+```{r}
+# Adding Lisbon icon 
+ptIcon <- makeIcon(
+  iconUrl = ifelse(pt$city == "Lisbon",
+                     "http://media.gettyimages.com/vectors/travel-lisbon-icon-vector-id641409438?s=170667a&w=1007",
+                   "https://cdn.countryflags.com/thumbs/portugal/flag-round-500.png"),
+  iconWidth = 31, iconHeight = 31,
+  iconAnchorX = 31, iconAnchorY = 16
+)
+
+pt_map <- pt %>%
+  leaflet() %>% 
+  addTiles() %>%
+  addMarkers(icon = ptIcon)
+pt_map
+```
+
+
+#### Adding popup with the population number to the map
+```{r}
+pt_map <- pt %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(icon = ptIcon, popup = as.character(pt$population)) %>%
+  addCircles(weight = 1, radius = sqrt(pt$population) * 30)
+pt_map
+```
+
+The popup on the cities icon's is the number of inhabitants of the each district.
